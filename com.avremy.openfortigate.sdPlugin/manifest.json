@@ -1,9 +1,9 @@
 {
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   "Name": "Tunnel Vision",
-  "Version": "1.2.0.0",
+  "Version": "1.3.0.0",
   "Author": "Avremy",
-  "Description": "One key per FortiGate VPN profile: press to connect or disconnect, with live status on the key. macOS uses openfortivpn; Windows uses openconnect. Passwords never live in Stream Deck's settings.",
+  "Description": "FortiGate VPN keys (openfortivpn on macOS, openconnect on Windows) plus a key that toggles the Mac's own System Settings VPNs — each with live status on the key.",
   "UUID": "com.avremy.openfortigate",
   "Category": "Tunnel Vision",
   "CategoryIcon": "imgs/category-icon",
@@ -11,7 +11,7 @@
   "CodePath": "bin/plugin.js",
   "SDKVersion": 2,
   "Software": {
-    "MinimumVersion": "6.5"
+    "MinimumVersion": "6.6"
   },
   "OS": [
     {
@@ -39,6 +39,27 @@
       ],
       "DisableCaching": true,
       "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/key",
+          "TitleAlignment": "bottom"
+        }
+      ]
+    },
+    {
+      "Name": "macOS VPN",
+      "UUID": "com.avremy.openfortigate.nativevpn",
+      "Icon": "imgs/action-icon",
+      "Tooltip": "Press to enable / disable a VPN from System Settings",
+      "PropertyInspectorPath": "ui/native.html",
+      "Controllers": [
+        "Keypad"
+      ],
+      "DisableCaching": true,
+      "UserTitleEnabled": false,
+      "OS": [
+        "mac"
+      ],
       "States": [
         {
           "Image": "imgs/key",

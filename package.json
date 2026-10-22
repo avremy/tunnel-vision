@@ -1,6 +1,6 @@
 {
   "name": "streamdeck-openfortigate",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Stream Deck plugin to connect/disconnect openfortivpn profiles with live status",
   "type": "module",
   "private": true,
@@ -9,7 +9,8 @@
     "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.avremy.openfortigate\"",
     "link": "streamdeck link com.avremy.openfortigate.sdPlugin",
     "restart": "streamdeck restart com.avremy.openfortigate",
-    "pack": "streamdeck pack com.avremy.openfortigate.sdPlugin --force -o dist"
+    "pack": "streamdeck pack com.avremy.openfortigate.sdPlugin --force -o dist",
+    "release": "npm run build && streamdeck pack com.avremy.openfortigate.sdPlugin --force -o dist && node -e \"const v=require('./package.json').version;require('fs').mkdirSync('releases',{recursive:true});require('fs').copyFileSync('dist/com.avremy.openfortigate.streamDeckPlugin','releases/TunnelVision-'+v+'.streamDeckPlugin')\""
   },
   "dependencies": {
     "@elgato/streamdeck": "1.4.1"

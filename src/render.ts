@@ -25,6 +25,8 @@ export interface KeyView {
 	status: VpnStatus | "setup";
 	frame: number;
 	connectedSince?: number;
+	/** Replaces the status word under the shield (e.g. "ENABLED"). */
+	label?: string;
 }
 
 export function renderKey(v: KeyView): string {
@@ -33,7 +35,7 @@ export function renderKey(v: KeyView): string {
 	const fillOpacity = pulsing ? (v.frame % 2 ? 0.25 : 0.7) : v.status === "connected" ? 0.9 : 0.18;
 	const ink = v.status === "connected" ? "#0B0B0D" : c;
 
-	const label = {
+	const label = v.label ?? {
 		disconnected: "OFF",
 		connecting: "CONNECTING",
 		disconnecting: "STOPPING",

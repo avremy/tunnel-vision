@@ -5,3 +5,4 @@ com.avremy.openfortigate.sdPlugin/logs/
 dist/
 .DS_Store
 *.log
+!releases/*.streamDeckPlugin

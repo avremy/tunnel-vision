@@ -224,7 +224,7 @@ export class VpnToggle extends SingletonAction<Settings> {
 		const pi = streamDeck.ui.current;
 		if (!pi) return;
 		const piKey = this.keys.get(pi.action.id);
-		if (piKey && piKey.settings.profileId !== id) return;
+		if (!piKey || piKey.settings.profileId !== id) return;
 		await pi.sendToPropertyInspector({
 			type: "setup",
 			profileId: id,
@@ -314,7 +314,7 @@ export class VpnToggle extends SingletonAction<Settings> {
 		const pi = streamDeck.ui.current;
 		if (!pi || !settings.profileId) return;
 		const piKey = this.keys.get(pi.action.id);
-		if (piKey && piKey.settings.profileId !== settings.profileId) return;
+		if (!piKey || piKey.settings.profileId !== settings.profileId) return; // another key's / action's panel
 		const s = this.session(settings);
 		await pi.sendToPropertyInspector({
 			type: "state",

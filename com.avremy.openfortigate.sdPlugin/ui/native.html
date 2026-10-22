@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>macOS VPN</title>
+<style>
+  :root { --bg:#2D2D2D; --field:#3D3D3D; --text:#D8D8D8; --muted:#969696; --accent:#0A84FF;
+          --green:#30D158; --amber:#FFB020; --red:#FF453A; --grey:#8E8E93; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:8px 12px 14px; background:var(--bg); color:var(--text);
+         font: 13px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  .row { display:flex; align-items:center; margin:6px 0; gap:8px; }
+  .row > label { flex:0 0 92px; text-align:right; color:var(--muted); font-size:12px; }
+  .row > .val { flex:1; min-width:0; display:flex; gap:6px; align-items:center; }
+  select { width:100%; background:var(--field); color:var(--text); border:1px solid transparent;
+           border-radius:4px; padding:5px 7px; font:inherit; outline:none; }
+  select:focus { border-color:var(--accent); }
+  button { background:var(--field); color:var(--text); border:1px solid #555; border-radius:4px;
+           padding:5px 10px; font:inherit; cursor:pointer; white-space:nowrap; }
+  button:hover { border-color:var(--accent); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  button:disabled { opacity:.5; cursor:default; }
+  .hint { color:var(--muted); font-size:11px; margin:2px 0 4px 100px; }
+  hr { border:none; border-top:1px solid #444; margin:12px 0; }
+  .status { display:flex; align-items:center; gap:8px; padding:8px 10px; background:#262626; border-radius:6px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:var(--grey); flex:0 0 10px; }
+  .status .txt { flex:1; font-weight:600; }
+  .err { color:var(--red); font-size:12px; margin:6px 2px; word-break:break-word; }
+  .note { color:var(--muted); font-size:12px; padding:10px; background:#262626; border-radius:6px; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+
+<div id="macOnly" class="note hidden">This key controls VPNs from macOS System Settings, so it only works on a Mac.</div>
+
+<div id="main">
+  <div class="row"><label>VPN</label>
+    <div class="val">
+      <select id="service"><option value="">Loading…</option></select>
+      <button id="refresh" title="Reload the list">↻</button>
+    </div>
+  </div>
+  <div class="hint">VPNs from System Settings → VPN (IKEv2, IPSec, L2TP, and apps like FortiClient, Tailscale or WireGuard that add one there).</div>
+
+  <hr>
+
+  <div class="status">
+    <span class="dot" id="dot"></span>
+    <span class="txt" id="statusTxt">…</span>
+    <button class="primary" id="toggleBtn" disabled>Enable</button>
+  </div>
+  <div class="err hidden" id="err"></div>
+</div>
+
+<script>
+  const COLORS = { disconnected:"var(--grey)", connecting:"var(--amber)", disconnecting:"var(--amber)", connected:"var(--green)", error:"var(--red)", setup:"var(--accent)" };
+  const $ = (id) => document.getElementById(id);
+  let ws, uuid, actionUUID, settings = {}, last = null;
+
+  function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+  function toPlugin(payload) { send({ event: "sendToPlugin", action: actionUUID, context: uuid, payload }); }
+
+  function render(m) {
+    last = m;
+    $("macOnly").classList.toggle("hidden", m.mac);
+    $("main").classList.toggle("hidden", !m.mac);
+    if (!m.mac) return;
+
+    const sel = $("service");
+    if (document.activeElement !== sel) {
+      sel.textContent = "";
+      const ph = document.createElement("option");
+      ph.value = ""; ph.textContent = m.services.length ? "Choose a VPN…" : "No VPNs found in System Settings";
+      sel.append(ph);
+      let found = false;
+      for (const s of m.services) {
+        const o = document.createElement("option");
+        o.value = s.id;
+        o.textContent = `${s.name}  (${s.status.toLowerCase()})`;
+        if (s.id === settings.serviceId) { o.selected = true; found = true; }
+        sel.append(o);
+      }
+      if (settings.serviceId && !found) {
+        const o = document.createElement("option");
+        o.value = settings.serviceId; o.selected = true;
+        o.textContent = `${settings.serviceName || "Saved VPN"}  (not found)`;
+        sel.append(o);
+      }
+    }
+
+    $("dot").style.background = COLORS[m.status] || "var(--grey)";
+    const words = { SETUP: "Choose a VPN above" };
+    $("statusTxt").textContent = words[m.label] || m.label.charAt(0) + m.label.slice(1).toLowerCase();
+    const on = m.status === "connected" || m.status === "connecting";
+    $("toggleBtn").textContent = on ? "Disable" : "Enable";
+    $("toggleBtn").disabled = !settings.serviceId || m.status === "disconnecting";
+    $("err").textContent = m.error || "";
+    $("err").classList.toggle("hidden", !m.error);
+  }
+
+  $("service").addEventListener("change", (e) => {
+    const id = e.target.value;
+    const svc = last && last.services.find((s) => s.id === id);
+    settings = id ? { serviceId: id, serviceName: svc ? svc.name : "" } : {};
+    send({ event: "setSettings", context: uuid, payload: settings });
+    toPlugin({ type: "refresh" });
+  });
+  $("refresh").addEventListener("click", () => toPlugin({ type: "refresh" }));
+  $("toggleBtn").addEventListener("click", () => toPlugin({ type: "toggle" }));
+
+  window.connectElgatoStreamDeckSocket = function (port, inUUID, registerEvent, info, actionInfo) {
+    uuid = inUUID;
+    const ai = JSON.parse(actionInfo);
+    actionUUID = ai.action;
+    settings = (ai.payload && ai.payload.settings) || {};
+    ws = new WebSocket("ws://127.0.0.1:" + port);
+    ws.onopen = () => { send({ event: registerEvent, uuid }); toPlugin({ type: "refresh" }); };
+    ws.onmessage = (e) => {
+      const m = JSON.parse(e.data);
+      if (m.event === "didReceiveSettings") { settings = m.payload.settings || {}; if (last) render(last); }
+      else if (m.event === "sendToPropertyInspector" && m.payload && m.payload.type === "native") render(m.payload);
+    };
+  };
+</script>
+</body>
+</html>

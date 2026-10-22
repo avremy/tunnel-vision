@@ -2,6 +2,12 @@
 
 One Stream Deck key per FortiGate VPN profile. Press to connect, press again to disconnect; the key shows the live state. Works on **macOS** (openfortivpn) and **Windows** (openconnect).
 
+There's also a **macOS VPN** key that toggles any VPN from macOS *System Settings → VPN* (see below).
+
+## Install
+
+Download the latest file from [`releases/`](releases/) (e.g. `TunnelVision-1.3.0.streamDeckPlugin`) and double-click it. It's one package for both macOS and Windows — the plugin is JavaScript run by Stream Deck's bundled Node.js, and the Windows helper scripts ship inside it. Then open a key's settings and follow its **Setup** checklist.
+
 | Key | Meaning |
 |---|---|
 | Grey shield, power glyph, **OFF** | Disconnected |
@@ -95,6 +101,16 @@ It finds `openconnect.exe`, copies the helper to `C:\Program Files\TunnelVision\
 
 ---
 
+## macOS VPN key
+
+The **macOS VPN** action (Mac only — hidden on Windows) toggles a VPN that's configured in *System Settings → VPN*: IKEv2, IPSec, L2TP, and VPN apps that register a system VPN there (FortiClient, Tailscale, WireGuard, …).
+
+- Pick the VPN from the dropdown in the key's settings; the key shows **ENABLED** (green) or **DISABLED** (grey), **CONNECTING / STOPPING** while it changes, and **FAILED** (red) if a start didn't come up.
+- It uses `scutil --nc list | start | stop` — no sudo or setup needed. Status is refreshed every 2.5 s, so changes made from the menu bar or System Settings show up on the key too.
+- A VPN that needs a password macOS hasn't saved can't be started from the key: save it in System Settings first (or the VPN app has to be running, for app-based VPNs).
+
+---
+
 ## Develop
 
 ```sh
@@ -104,9 +120,12 @@ npm run link       # symlinks the .sdPlugin into Stream Deck (once, on the dev m
 npm run restart    # reloads the plugin
 npm run watch      # rebuild + restart on save
 npm run pack       # dist/com.avremy.openfortigate.streamDeckPlugin for installing elsewhere (e.g. Windows)
+npm run release    # build + pack + copy to releases/TunnelVision-<version>.streamDeckPlugin (committed)
 ```
 
-Layout: `src/vpn-session.ts` is the OS-independent state machine (tails the log, tracks status); `src/platform/mac.ts` and `src/platform/win.ts` do the OS-specific start/stop/detect/password work; the Windows helper scripts ship inside the plugin under `windows/`.
+To cut a release: bump `version` in `package.json` and `Version` in `manifest.json`, run `npm run release`, commit the new file in `releases/`.
+
+Layout: `src/actions/vpn-toggle.ts` (FortiGate keys) and `src/actions/native-vpn.ts` (macOS VPN key, via `src/native/scutil.ts`); `src/vpn-session.ts` is the OS-independent state machine (tails the log, tracks status); `src/platform/mac.ts` and `src/platform/win.ts` do the OS-specific start/stop/detect/password work; the Windows helper scripts ship inside the plugin under `windows/`.
 
 ## Notes
 
