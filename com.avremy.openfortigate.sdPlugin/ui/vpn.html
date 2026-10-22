@@ -1,0 +1,281 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Tunnel Vision</title>
+<style>
+  :root { --bg:#2D2D2D; --field:#3D3D3D; --text:#D8D8D8; --muted:#969696; --accent:#0A84FF;
+          --green:#30D158; --amber:#FFB020; --red:#FF453A; --grey:#8E8E93; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:8px 12px 14px; background:var(--bg); color:var(--text);
+         font: 13px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  .row { display:flex; align-items:center; margin:6px 0; gap:8px; }
+  .row > label { flex:0 0 92px; text-align:right; color:var(--muted); font-size:12px; }
+  .row > .val { flex:1; min-width:0; display:flex; gap:6px; align-items:center; }
+  input, select { width:100%; background:var(--field); color:var(--text); border:1px solid transparent;
+         border-radius:4px; padding:5px 7px; font:inherit; outline:none; }
+  input:focus, select:focus { border-color:var(--accent); }
+  input::placeholder { color:#6f6f6f; }
+  button { background:var(--field); color:var(--text); border:1px solid #555; border-radius:4px;
+           padding:5px 10px; font:inherit; cursor:pointer; white-space:nowrap; }
+  button:hover { border-color:var(--accent); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .hint { color:var(--muted); font-size:11px; margin:-2px 0 4px 100px; }
+  .hint.ok { color:var(--green); } .hint.warn { color:var(--amber); }
+  hr { border:none; border-top:1px solid #444; margin:12px 0; }
+  .status { display:flex; align-items:center; gap:8px; padding:8px 10px; background:#262626;
+            border-radius:6px; margin-top:4px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:var(--grey); flex:0 0 10px; }
+  .status .txt { flex:1; font-weight:600; }
+  .err { color:var(--red); font-size:12px; margin:6px 2px; word-break:break-word; }
+  .cert { background:#3a2f17; border:1px solid #6b5420; border-radius:6px; padding:8px; margin-top:8px; font-size:12px; }
+  .cert code { display:block; word-break:break-all; font-size:10.5px; color:#ffd58a; margin:4px 0 6px; }
+  details { margin-top:10px; } summary { cursor:pointer; color:var(--muted); font-size:12px; }
+  pre { background:#1e1e1e; color:#bdbdbd; font:10.5px Menlo, monospace; padding:8px; border-radius:4px;
+        max-height:180px; overflow:auto; white-space:pre-wrap; word-break:break-all; margin:6px 0 0; }
+  .hidden { display:none !important; }
+  #setupBox { margin:2px 0 10px; background:#262626; border-radius:6px; padding:8px 10px; }
+  #setupBox > summary { color:var(--text); font-weight:600; font-size:13px; }
+  #setupBadge { font-weight:600; font-size:11px; margin-left:6px; padding:1px 7px; border-radius:9px; }
+  #setupBadge.ok { background:#1f3d27; color:var(--green); }
+  #setupBadge.todo { background:#4a3a14; color:var(--amber); }
+  ol.steps { list-style:none; margin:8px 0 4px; padding:0; counter-reset:step; }
+  ol.steps li { display:flex; gap:9px; padding:7px 0; border-top:1px solid #353535; }
+  ol.steps li:first-child { border-top:none; }
+  .mark { flex:0 0 20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+          font-size:11px; font-weight:700; background:#3a3a3a; color:var(--muted); }
+  li.ok .mark { background:#1f3d27; color:var(--green); }
+  li.todo .mark { background:#4a3a14; color:var(--amber); }
+  .stepBody { flex:1; min-width:0; }
+  .stepTitle { font-weight:600; }
+  li.ok .stepTitle { color:var(--muted); }
+  .stepDetail { color:var(--muted); font-size:11.5px; margin-top:2px; word-break:break-word; }
+  .copyRow { display:flex; gap:6px; margin-top:5px; align-items:stretch; }
+  .copyRow code { flex:1; min-width:0; background:#1e1e1e; color:#cfcfcf; font:10.5px Menlo, Consolas, monospace;
+                  padding:5px 6px; border-radius:4px; white-space:pre-wrap; word-break:break-all; }
+  .stepBody > button { margin-top:6px; }
+  .setupFoot { display:flex; align-items:center; gap:8px; margin-top:4px; }
+  #setupMsg { font-size:11.5px; flex:1; }
+  #setupMsg.ok { color:var(--green); } #setupMsg.err { color:var(--red); }
+</style>
+</head>
+<body>
+
+<details id="setupBox">
+  <summary>Setup <span id="setupBadge"></span></summary>
+  <ol class="steps" id="setupSteps"><li><div class="stepBody"><div class="stepDetail">Checking…</div></div></li></ol>
+  <div class="setupFoot"><span id="setupMsg"></span><button id="recheck">Re-check</button></div>
+</details>
+
+<div class="row"><label>Profile name</label><div class="val"><input id="name" placeholder="e.g. Office" maxlength="24"></div></div>
+<div class="row"><label>Gateway</label><div class="val"><input id="host" placeholder="vpn.example.com or 1.2.3.4" spellcheck="false"></div></div>
+<div class="row"><label>Port</label><div class="val"><input id="port" placeholder="443" inputmode="numeric" style="max-width:90px"></div></div>
+<div class="row"><label>Username</label><div class="val"><input id="username" autocomplete="off" spellcheck="false"></div></div>
+<div class="row"><label>Password</label>
+  <div class="val">
+    <input id="password" type="password" autocomplete="new-password" placeholder="••••••••">
+    <button id="savePw">Save</button>
+  </div>
+</div>
+<div class="hint" id="pwHint">Stored securely on this computer, not in Stream Deck settings.</div>
+<div class="row"><label>Trusted cert</label><div class="val"><input id="trustedCert" placeholder="optional SHA256 fingerprint" spellcheck="false"></div></div>
+
+<details id="advanced">
+  <summary>Advanced</summary>
+  <div class="row" id="scriptRow"><label>Script</label><div class="val"><input id="scriptPath" spellcheck="false"></div></div>
+  <div class="row"><label>Disconnect</label><div class="val">
+    <select id="disconnectMode">
+      <option value="profile">Only this profile (sudo pkill)</option>
+      <option value="all">All tunnels</option>
+    </select></div></div>
+  <div class="row"><label></label><div class="val"><button id="forgetPw">Forget saved password</button></div></div>
+</details>
+
+<hr>
+
+<div class="status">
+  <span class="dot" id="dot"></span>
+  <span class="txt" id="statusTxt">…</span>
+  <button class="primary" id="toggleBtn">Connect</button>
+</div>
+<div class="err hidden" id="err"></div>
+
+<div class="cert hidden" id="certBox">
+  The gateway’s certificate isn’t trusted yet. Fingerprint reported by openfortivpn:
+  <code id="certVal"></code>
+  <button id="trustCert">Trust this certificate</button>
+</div>
+
+<details id="logBox">
+  <summary>Connection log</summary>
+  <pre id="log">(nothing yet)</pre>
+</details>
+
+<script>
+  const FIELDS = ["name", "host", "port", "username", "trustedCert", "scriptPath", "disconnectMode"];
+  const COLORS = { disconnected:"var(--grey)", connecting:"var(--amber)", disconnecting:"var(--amber)", connected:"var(--green)", error:"var(--red)" };
+  const LABELS = { disconnected:"Disconnected", connecting:"Connecting…", disconnecting:"Disconnecting…", connected:"Connected", error:"Error" };
+  const $ = (id) => document.getElementById(id);
+
+  let ws, uuid, actionUUID, settings = {}, state = null, saveTimer;
+
+  function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+  function toPlugin(payload) { send({ event: "sendToPlugin", action: actionUUID, context: uuid, payload }); }
+  function saveSettings() { send({ event: "setSettings", context: uuid, payload: settings }); }
+
+  function fill() {
+    for (const f of FIELDS) {
+      const el = $(f);
+      if (document.activeElement === el) continue;
+      el.value = settings[f] ?? (f === "disconnectMode" ? "profile" : "");
+    }
+    $("scriptPath").placeholder = (state && state.defaultScript) || "~/.local/bin/openfortivpn-connect.sh";
+    const isWin = state && state.platform === "windows";
+    $("scriptRow").classList.toggle("hidden", !!isWin);
+    $("trustedCert").placeholder = isWin ? "optional: SHA256 hex or pin-sha256:…" : "optional SHA256 fingerprint";
+  }
+
+  function fmtUptime(since) {
+    if (!since) return "";
+    const s = Math.floor((Date.now() - since) / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
+    return h ? ` · ${h}h ${m}m` : ` · ${m}m ${s % 60}s`;
+  }
+
+  function renderState() {
+    if (!state) return;
+    $("dot").style.background = COLORS[state.status];
+    $("statusTxt").textContent = LABELS[state.status] + (state.status === "connected" ? fmtUptime(state.connectedSince) : "");
+    const busy = state.status === "connecting" || state.status === "disconnecting";
+    $("toggleBtn").textContent = state.status === "connected" ? "Disconnect" : state.status === "connecting" ? "Cancel" : "Connect";
+    $("toggleBtn").disabled = state.status === "disconnecting";
+
+    $("err").textContent = state.lastError || "";
+    $("err").classList.toggle("hidden", !state.lastError);
+
+    const showCert = state.suggestedCert && state.suggestedCert !== (settings.trustedCert || "").toLowerCase();
+    $("certBox").classList.toggle("hidden", !showCert);
+    if (showCert) $("certVal").textContent = state.suggestedCert;
+
+    const hint = $("pwHint");
+    const store = state.passwordStore || "your macOS Keychain";
+    hint.textContent = state.hasPassword ? `✓ Password saved in ${store}.` : `No password saved yet — it's kept in ${store}, not in Stream Deck.`;
+    hint.className = "hint " + (state.hasPassword ? "ok" : "warn");
+
+    const pre = $("log"), atBottom = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 4;
+    pre.textContent = state.log && state.log.length ? state.log.join("\n") : "(nothing yet)";
+    if (atBottom) pre.scrollTop = pre.scrollHeight;
+  }
+
+  // field edits → settings (debounced)
+  for (const f of FIELDS) {
+    const el = $(f);
+    const handler = () => {
+      const v = el.value.trim();
+      if (v) settings[f] = v; else delete settings[f];
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveSettings, 300);
+    };
+    el.addEventListener("input", handler);
+    el.addEventListener("change", handler);
+  }
+
+  $("savePw").addEventListener("click", () => {
+    const pw = $("password").value;
+    if (!pw) return;
+    toPlugin({ type: "savePassword", password: pw });
+    $("password").value = "";
+  });
+  $("password").addEventListener("keydown", (e) => { if (e.key === "Enter") $("savePw").click(); });
+  $("forgetPw").addEventListener("click", () => toPlugin({ type: "forgetPassword" }));
+  $("toggleBtn").addEventListener("click", () => {
+    clearTimeout(saveTimer); saveSettings();
+    setTimeout(() => toPlugin({ type: "toggle" }), 150);
+  });
+  $("trustCert").addEventListener("click", () => {
+    settings.trustedCert = state.suggestedCert;
+    $("trustedCert").value = state.suggestedCert;
+    saveSettings();
+    toPlugin({ type: "clearError" });
+  });
+
+  // ---------- setup checklist ----------
+  let setupSeen = false, lastSetupOk = null;
+  function copyText(text, btn) {
+    const done = () => { const t = btn.textContent; btn.textContent = "Copied"; setTimeout(() => (btn.textContent = t), 1200); };
+    const fallback = () => { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta);
+      ta.select(); try { document.execCommand("copy"); done(); } finally { ta.remove(); } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+  }
+  function renderSetup(m) {
+    const list = $("setupSteps");
+    list.textContent = "";
+    m.steps.forEach((st, i) => {
+      const li = document.createElement("li");
+      li.className = st.ok ? "ok" : "todo";
+      const mark = document.createElement("span"); mark.className = "mark"; mark.textContent = st.ok ? "✓" : String(i + 1);
+      const body = document.createElement("div"); body.className = "stepBody";
+      const title = document.createElement("div"); title.className = "stepTitle"; title.textContent = st.title;
+      const detail = document.createElement("div"); detail.className = "stepDetail"; detail.textContent = st.detail;
+      body.append(title, detail);
+      if (st.copy) {
+        const row = document.createElement("div"); row.className = "copyRow";
+        const code = document.createElement("code"); code.textContent = st.copy;
+        const b = document.createElement("button"); b.textContent = "Copy"; b.onclick = () => copyText(st.copy, b);
+        row.append(code, b); body.append(row);
+      }
+      if (st.action) {
+        const b = document.createElement("button");
+        const running = m.running === st.id;
+        b.className = "primary";
+        b.textContent = running ? "Working…" : st.action.label;
+        b.disabled = !!m.running;
+        b.onclick = () => {
+          if (st.action.kind === "url") send({ event: "openUrl", payload: { url: st.action.url } });
+          else toPlugin({ type: "setupRun", step: st.id });
+        };
+        body.append(b);
+      }
+      li.append(mark, body);
+      list.append(li);
+    });
+    const todo = m.steps.filter((s) => !s.ok).length;
+    const badge = $("setupBadge");
+    badge.textContent = todo ? `${todo} to do` : "✓ ready";
+    badge.className = todo ? "todo" : "ok";
+    const allOk = todo === 0;
+    if (!setupSeen || (lastSetupOk === true && !allOk)) $("setupBox").open = !allOk;
+    setupSeen = true; lastSetupOk = allOk;
+    const msg = $("setupMsg");
+    msg.textContent = m.error || m.message || (m.running ? "Waiting for you to approve…" : "");
+    msg.className = m.error ? "err" : m.message ? "ok" : "";
+    $("recheck").disabled = !!m.running;
+  }
+  $("recheck").addEventListener("click", () => { $("setupMsg").textContent = "Checking…"; $("setupMsg").className = ""; toPlugin({ type: "setupCheck" }); });
+
+  setInterval(() => { if (state && state.status === "connected") renderState(); }, 1000);
+
+  // Stream Deck entry point
+  window.connectElgatoStreamDeckSocket = function (port, inUUID, registerEvent, info, actionInfo) {
+    uuid = inUUID;
+    const ai = JSON.parse(actionInfo);
+    actionUUID = ai.action;
+    settings = (ai.payload && ai.payload.settings) || {};
+    fill();
+    ws = new WebSocket("ws://127.0.0.1:" + port);
+    ws.onopen = () => send({ event: registerEvent, uuid });
+    ws.onmessage = (e) => {
+      const m = JSON.parse(e.data);
+      if (m.event === "didReceiveSettings") { settings = m.payload.settings || {}; fill(); renderState(); }
+      else if (m.event === "sendToPropertyInspector" && m.payload && m.payload.type === "state") {
+        if (settings.profileId && m.payload.profileId !== settings.profileId) return;
+        state = m.payload; fill(); renderState();
+      }
+      else if (m.event === "sendToPropertyInspector" && m.payload && m.payload.type === "setup") {
+        if (settings.profileId && m.payload.profileId !== settings.profileId) return;
+        renderSetup(m.payload);
+      }
+    };
+  };
+</script>
+</body>
+</html>

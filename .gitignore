@@ -1,0 +1,7 @@
+node_modules/
+com.avremy.openfortigate.sdPlugin/bin/
+com.avremy.openfortigate.sdPlugin/logs/
+*.streamDeckPlugin
+dist/
+.DS_Store
+*.log

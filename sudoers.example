@@ -1,0 +1,7 @@
+# Lets the Stream Deck plugin start/stop openfortivpn without a password prompt
+# (the plugin has no terminal to type one into).
+#
+# Install with:   sudo visudo -f /etc/sudoers.d/openfortivpn
+# then paste the line below (replace "avremy" if your username differs).
+
+avremy ALL=(root) NOPASSWD: /opt/homebrew/bin/openfortivpn, /usr/bin/killall openfortivpn, /usr/bin/pkill -TERM -f openfortivpn *

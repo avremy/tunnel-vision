@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "Name": "Tunnel Vision",
+  "Version": "1.2.0.0",
+  "Author": "Avremy",
+  "Description": "One key per FortiGate VPN profile: press to connect or disconnect, with live status on the key. macOS uses openfortivpn; Windows uses openconnect. Passwords never live in Stream Deck's settings.",
+  "UUID": "com.avremy.openfortigate",
+  "Category": "Tunnel Vision",
+  "CategoryIcon": "imgs/category-icon",
+  "Icon": "imgs/plugin-icon",
+  "CodePath": "bin/plugin.js",
+  "SDKVersion": 2,
+  "Software": {
+    "MinimumVersion": "6.5"
+  },
+  "OS": [
+    {
+      "Platform": "mac",
+      "MinimumVersion": "12"
+    },
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Nodejs": {
+    "Version": "20",
+    "Debug": "enabled"
+  },
+  "Actions": [
+    {
+      "Name": "FortiVPN Profile",
+      "UUID": "com.avremy.openfortigate.vpn",
+      "Icon": "imgs/action-icon",
+      "Tooltip": "Press to connect / disconnect this VPN profile",
+      "PropertyInspectorPath": "ui/vpn.html",
+      "Controllers": [
+        "Keypad"
+      ],
+      "DisableCaching": true,
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/key",
+          "TitleAlignment": "bottom"
+        }
+      ]
+    }
+  ]
+}
