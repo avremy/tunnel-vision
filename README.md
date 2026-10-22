@@ -6,7 +6,7 @@ There's also a **macOS VPN** key that toggles any VPN from macOS *System Setting
 
 ## Install
 
-Download the latest file from [`releases/`](releases/) (e.g. `TunnelVision-1.3.0.streamDeckPlugin`) and double-click it. It's one package for both macOS and Windows — the plugin is JavaScript run by Stream Deck's bundled Node.js, and the Windows helper scripts ship inside it. Then open a key's settings and follow its **Setup** checklist.
+Download the latest file from [`releases/`](releases/) (e.g. `TunnelVision-1.3.1.streamDeckPlugin`) and double-click it. It's one package for both macOS and Windows — the plugin is JavaScript run by Stream Deck's bundled Node.js, and the Windows helper scripts ship inside it. Then open a key's settings and follow its **Setup** checklist.
 
 | Key | Meaning |
 |---|---|

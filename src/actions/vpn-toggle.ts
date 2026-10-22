@@ -46,6 +46,8 @@ export class VpnToggle extends SingletonAction<Settings> {
 	private readonly keys = new Map<string, Key>();
 	private readonly sessions = new Map<string, VpnSession>();
 	private readonly lastImage = new Map<string, string>();
+	/** Stream Deck state per key: 1 = connected, 0 = anything else (what MCP / multi-actions see). */
+	private readonly lastState = new Map<string, number>();
 	/** profileId → are all setup steps done? Unfinished setup shows SETUP on the key. */
 	private readonly setupOk = new Map<string, boolean>();
 	private setupRunning?: string;
@@ -73,6 +75,7 @@ export class VpnToggle extends SingletonAction<Settings> {
 	override onWillDisappear(ev: WillDisappearEvent<Settings>): void {
 		this.keys.delete(ev.action.id);
 		this.lastImage.delete(ev.action.id);
+		this.lastState.delete(ev.action.id);
 		if (this.keys.size === 0) {
 			clearInterval(this.pollTimer);
 			this.pollTimer = undefined;
@@ -300,6 +303,11 @@ export class VpnToggle extends SingletonAction<Settings> {
 		const s = this.session(k.settings);
 		const needsSetup = !configured || this.setupOk.get(k.settings.profileId ?? "") === false;
 		const status = needsSetup && s.status === "disconnected" ? "setup" : s.status;
+		const state = s.status === "connected" ? 1 : 0;
+		if (this.lastState.get(ctx) !== state) {
+			this.lastState.set(ctx, state);
+			void k.action.setState(state);
+		}
 		const img = renderKey({ name: this.label(k.settings), status, frame: this.frame, connectedSince: s.connectedSince });
 		if (this.lastImage.get(ctx) === img) return;
 		this.lastImage.set(ctx, img);

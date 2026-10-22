@@ -34,6 +34,8 @@ export class NativeVpnToggle extends SingletonAction<Settings> {
 	private readonly pending = new Map<string, Pending>();
 	private readonly errors = new Map<string, string>();
 	private readonly lastImage = new Map<string, string>();
+	/** Stream Deck state per key: 1 = enabled (connected), 0 = anything else. */
+	private readonly lastState = new Map<string, number>();
 	private pollTimer?: NodeJS.Timeout;
 	private frameTimer?: NodeJS.Timeout;
 	private frame = 0;
@@ -52,6 +54,7 @@ export class NativeVpnToggle extends SingletonAction<Settings> {
 	override onWillDisappear(ev: WillDisappearEvent<Settings>): void {
 		this.keys.delete(ev.action.id);
 		this.lastImage.delete(ev.action.id);
+		this.lastState.delete(ev.action.id);
 		if (this.keys.size === 0) {
 			clearInterval(this.pollTimer);
 			this.pollTimer = undefined;
@@ -208,6 +211,11 @@ export class NativeVpnToggle extends SingletonAction<Settings> {
 		if (!k) return;
 		const v = this.view(k.settings);
 		const name = k.settings.serviceName || this.services.get(k.settings.serviceId ?? "")?.name || "VPN";
+		const state = v.status === "connected" ? 1 : 0;
+		if (this.lastState.get(ctx) !== state) {
+			this.lastState.set(ctx, state);
+			void k.action.setState(state);
+		}
 		const img = renderKey({ name, status: v.status, label: v.label, frame: this.frame });
 		if (this.lastImage.get(ctx) === img) return;
 		this.lastImage.set(ctx, img);
